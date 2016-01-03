@@ -20,7 +20,7 @@ import org.springframework.web.filter.GenericFilterBean;
 
 /**
  * Filter responsible to intercept the JWT in the HTTP header and attempt an authentication. It delegates the authentication to the authentication manager
- * 
+ *
  * @author Daniel Teixeira
  */
 public class Auth0AuthenticationFilter extends GenericFilterBean {
@@ -30,27 +30,28 @@ public class Auth0AuthenticationFilter extends GenericFilterBean {
 
 	private AuthenticationEntryPoint entryPoint;
 
-	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+	@Override
+	public void doFilter(final ServletRequest req, final ServletResponse res, final FilterChain chain) throws IOException, ServletException {
 
 		final HttpServletRequest request = (HttpServletRequest) req;
 		final HttpServletResponse response = (HttpServletResponse) res;
-		
+
 		if (request.getMethod().equals("OPTIONS")) {
 			// This is CORS request
 			chain.doFilter(request, response);
 			return;
 		}
 
-		String jwt = getToken((HttpServletRequest) request);
+		final String jwt = getToken(request);
 
 		if (jwt != null) {
 			try {
 
-				Auth0JWTToken token = new Auth0JWTToken(jwt);
-				Authentication authResult = authenticationManager.authenticate(token);
+				final Auth0JWTToken token = new Auth0JWTToken(jwt);
+				final Authentication authResult = authenticationManager.authenticate(token);
 				SecurityContextHolder.getContext().setAuthentication(authResult);
 
-			} catch (AuthenticationException failed) {
+			} catch (final AuthenticationException failed) {
 				SecurityContextHolder.clearContext();
 				entryPoint.commence(request, response, failed);
 				return;
@@ -64,7 +65,7 @@ public class Auth0AuthenticationFilter extends GenericFilterBean {
 	/**
 	 * Looks at the authorization bearer and extracts the JWT
 	 */
-	private String getToken(HttpServletRequest httpRequest) {
+	private String getToken(final HttpServletRequest httpRequest) {
 		String token = null;
 		final String authorizationHeader = httpRequest.getHeader("authorization");
 		if (authorizationHeader == null) {
@@ -72,17 +73,17 @@ public class Auth0AuthenticationFilter extends GenericFilterBean {
 			return null;
 		}
 
-		String[] parts = authorizationHeader.split(" ");
+		final String[] parts = authorizationHeader.split(" ");
 		if (parts.length != 2) {
 			// "Unauthorized: Format is Authorization: Bearer [token]"
 			return null;
 
 		}
 
-		String scheme = parts[0];
-		String credentials = parts[1];
+		final String scheme = parts[0];
+		final String credentials = parts[1];
 
-		Pattern pattern = Pattern.compile("^Bearer$", Pattern.CASE_INSENSITIVE);
+		final Pattern pattern = Pattern.compile("^Bearer$", Pattern.CASE_INSENSITIVE);
 		if (pattern.matcher(scheme).matches()) {
 			token = credentials;
 		}
@@ -93,7 +94,7 @@ public class Auth0AuthenticationFilter extends GenericFilterBean {
 		return entryPoint;
 	}
 
-	public void setEntryPoint(AuthenticationEntryPoint entryPoint) {
+	public void setEntryPoint(final AuthenticationEntryPoint entryPoint) {
 		this.entryPoint = entryPoint;
 	}
 
